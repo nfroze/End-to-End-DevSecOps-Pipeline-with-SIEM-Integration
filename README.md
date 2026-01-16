@@ -12,6 +12,8 @@ This demonstrates how a DevSecOps engineer thinks about security holistically—
 
 ## Architecture
 
+![Architecture](screenshots/architecture.png)
+
 The system follows a four-stage pipeline architecture triggered on push to main:
 
 1. **Security Scanning (CI)**: Semgrep performs SAST, Trivy scans dependencies, and Gitleaks detects secrets. A security gate blocks progression if critical issues are found.
