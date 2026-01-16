@@ -12,7 +12,7 @@ This demonstrates how a DevSecOps engineer thinks about security holistically—
 
 ## Architecture
 
-![Architecture](screenshots/architecture.png)
+![Architecture](screenshots/cloud-architecture.png)
 
 The system follows a four-stage pipeline architecture triggered on push to main:
 
