@@ -161,6 +161,10 @@ output "vpc_id" {
   value = aws_vpc.main.id
 }
 
+output "vpc_flow_log_group_name" {
+  value = aws_cloudwatch_log_group.vpc_logs.name
+}
+
 output "public_subnet_ids" {
   value = [aws_subnet.public_a.id, aws_subnet.public_b.id]
 }

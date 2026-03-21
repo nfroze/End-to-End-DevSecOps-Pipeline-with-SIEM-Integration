@@ -1,0 +1,26 @@
+clusterName: "project5-eks-cluster"
+
+splunkPlatform:
+  endpoint: "${SPLUNK_HEC_URL}"
+  token: "${SPLUNK_HEC_TOKEN}"
+  index: "main"
+  metricsIndex: ""
+  logsEnabled: true
+  metricsEnabled: false
+  tracesEnabled: false
+  insecureSkipVerify: true
+
+logsCollection:
+  containers:
+    enabled: true
+    excludeAgentLogs: true
+
+clusterReceiver:
+  enabled: true
+  eventsEnabled: true
+  k8sObjects:
+    - name: pods
+      mode: pull
+      interval: 60s
+    - name: events
+      mode: watch

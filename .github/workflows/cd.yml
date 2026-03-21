@@ -12,40 +12,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v5
 
-      - name: 🔧 Configure AWS
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
 
-      - name: 🔌 Connect to EKS
+      - name: Connect to EKS
         run: |
           aws eks update-kubeconfig --region eu-west-2 --name project5-eks-cluster
-          echo "✅ Connected to EKS cluster"
+          echo "Connected to EKS cluster"
 
-      - name: 🚀 Deploy to Kubernetes
+      - name: Deploy Application
         run: |
-          # Create namespace
           kubectl apply -f k8s/namespace.yaml
-          
-          # Deploy application
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
-          
-          # Update image to latest build
+
           kubectl set image deployment/project5-deployment \
             project5-app=nfroze/project5-app:${{ github.sha }} \
             -n project5
-          
-          # Wait for rollout
-          kubectl rollout status deployment/project5-deployment -n project5 --timeout=300s
-          echo "✅ Application deployed successfully"
 
-      - name: 🌐 Get Application URL
+          kubectl rollout status deployment/project5-deployment -n project5 --timeout=300s
+          echo "Application deployed successfully"
+
+      - name: Deploy Splunk OpenTelemetry Collector
+        run: |
+          helm repo add splunk-otel-collector-chart https://signalfx.github.io/splunk-otel-collector-chart
+          helm repo update
+
+          helm upgrade --install splunk-otel-collector \
+            splunk-otel-collector-chart/splunk-otel-collector \
+            --namespace splunk --create-namespace \
+            -f splunk/values.yaml \
+            --set splunkPlatform.endpoint=https://${{ secrets.SPLUNK_HEC_HOST }}:8088/services/collector \
+            --set splunkPlatform.token=${{ secrets.SPLUNK_HEC_TOKEN }}
+
+          echo "Splunk OpenTelemetry Collector deployed"
+
+      - name: Get Application URL
         id: get-url
         run: |
           echo "Waiting for LoadBalancer..."
@@ -53,42 +62,42 @@ jobs:
             LB_URL=$(kubectl get svc project5-service -n project5 -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
             if [ -n "$LB_URL" ]; then
               echo "APP_URL=http://${LB_URL}" >> $GITHUB_ENV
-              echo "✅ Application accessible at: http://${LB_URL}"
+              echo "Application accessible at: http://${LB_URL}"
               break
             fi
             sleep 10
           done
 
-      - name: 🩺 Health Check
+      - name: Health Check
         run: |
           echo "Verifying application health..."
           for i in {1..10}; do
             if curl -f "${{ env.APP_URL }}/health" >/dev/null 2>&1; then
-              echo "✅ Application is healthy"
+              echo "Application is healthy"
               break
             fi
             echo "Waiting for app to be ready... (attempt $i/10)"
             sleep 5
           done
 
-      - name: 🛡️ DAST Security Scan (OWASP ZAP)
+      - name: DAST Security Scan (OWASP ZAP)
         run: |
           echo "Running dynamic security analysis..."
-          
+
           docker run --rm \
             -t ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
             -t ${{ env.APP_URL }} \
             -I || true
-          
-          echo "✅ DAST scan completed successfully"
 
-      - name: ✅ Deployment Summary
+          echo "DAST scan completed"
+
+      - name: Deployment Summary
         if: always()
         run: |
-          echo "### Deployment Complete! 🎉"
-          echo "- **Application URL**: ${{ env.APP_URL }}"
-          echo "- **Container Image**: nfroze/project5-app:${{ github.sha }}"
-          echo "- **Security Scans**: All passed ✅"
-          echo ""
-          echo "AWS GuardDuty and CloudWatch are now monitoring this deployment."
+          echo "### Deployment Complete"
+          echo "- Application URL: ${{ env.APP_URL }}"
+          echo "- Container Image: nfroze/project5-app:${{ github.sha }}"
+          echo "- Splunk OTel Collector: Collecting pod logs, K8s events, and cluster metrics"
+          echo "- AWS Security Data: GuardDuty, Security Hub, CloudTrail, VPC Flow, EKS Audit via Splunk Add-on for AWS"
+          echo "- DAST: OWASP ZAP baseline scan completed"

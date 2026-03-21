@@ -1,8 +1,6 @@
 # Dependencies
 node_modules
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Environment and secrets
 .env
@@ -16,42 +14,30 @@ yarn-error.log*
 
 # CI/CD
 .github/
-*.yml
-*.yaml
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 .DS_Store
 
 # Documentation
 README.md
-SECURITY.md
-docs/
-*.md
+documents/
 
-# Testing
-coverage/
-test/
-tests/
-*.test.js
-*.spec.js
-
-# Infrastructure
+# Infrastructure (not needed in container)
 terraform/
-modules/
-*.tf
-*.tfvars
-*.tfstate*
-.terraform/
 k8s/
+splunk/
+screenshots/
 
 # Docker files
 Dockerfile*
 docker-compose*
 .dockerignore
+
+# Security scan configs
+.semgrepignore
+.trivyignore
 
 # Build outputs
 dist/

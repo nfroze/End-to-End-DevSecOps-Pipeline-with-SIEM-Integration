@@ -29,7 +29,7 @@ resource "aws_kms_alias" "eks" {
 resource "aws_eks_cluster" "this" {
   name     = "project5-eks-cluster"
   role_arn = var.cluster_role_arn
-  version  = "1.32"
+  version  = "1.33"
 
   vpc_config {
     subnet_ids              = concat(var.private_subnet_ids, var.public_subnet_ids)
@@ -60,7 +60,7 @@ resource "aws_eks_node_group" "default" {
   subnet_ids      = var.private_subnet_ids
 
   instance_types = ["t3.medium"]
-  ami_type       = "AL2_x86_64"
+  ami_type       = "AL2023_x86_64_STANDARD"
 
   scaling_config {
     desired_size = 1

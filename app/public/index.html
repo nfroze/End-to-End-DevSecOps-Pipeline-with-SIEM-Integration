@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project 5 — DevSecOps Transformation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+      background: #0c0c0c;
+      color: #33ff33;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Scanline overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* Subtle CRT glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(51, 255, 51, 0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .terminal {
+      max-width: 720px;
+      width: 100%;
+      padding: 2rem;
+    }
+
+    .ascii-banner {
+      color: #33ff33;
+      font-size: 0.65rem;
+      line-height: 1.15;
+      white-space: pre;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 10px rgba(51, 255, 51, 0.5);
+    }
+
+    .prompt {
+      color: #888;
+      font-size: 0.7rem;
+      margin-bottom: 2rem;
+    }
+
+    .prompt span {
+      color: #33ff33;
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+      color: #888;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid #1a3a1a;
+      padding-bottom: 0.25rem;
+    }
+
+    .line {
+      display: flex;
+      font-size: 0.75rem;
+      line-height: 1.8;
+    }
+
+    .label {
+      color: #888;
+      min-width: 180px;
+      flex-shrink: 0;
+    }
+
+    .value {
+      color: #33ff33;
+    }
+
+    .value-ok {
+      color: #33ff33;
+      text-shadow: 0 0 8px rgba(51, 255, 51, 0.4);
+    }
+
+    .value-info {
+      color: #5599ff;
+    }
+
+    .value-dim {
+      color: #666;
+    }
+
+    .pipeline-grid {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 0.75rem 0;
+      font-size: 0.65rem;
+    }
+
+    .pipeline-stage {
+      text-align: center;
+    }
+
+    .pipeline-stage .name {
+      color: #33ff33;
+      text-shadow: 0 0 6px rgba(51, 255, 51, 0.3);
+    }
+
+    .pipeline-stage .status {
+      color: #33ff33;
+      font-size: 0.6rem;
+    }
+
+    .pipeline-arrow {
+      color: #555;
+      padding: 0 0.2rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .box {
+      border: 1px solid #1a3a1a;
+      padding: 0.75rem 1rem;
+      margin: 1rem 0;
+      font-size: 0.7rem;
+      line-height: 1.6;
+    }
+
+    .box-header {
+      color: #33ff33;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      text-shadow: 0 0 8px rgba(51, 255, 51, 0.3);
+    }
+
+    .box .check {
+      color: #33ff33;
+    }
+
+    .box .item {
+      color: #aaa;
+    }
+
+    .endpoints {
+      margin-top: 1.5rem;
+    }
+
+    .endpoints a {
+      color: #5599ff;
+      text-decoration: none;
+      font-size: 0.75rem;
+      margin-right: 1.5rem;
+      transition: text-shadow 0.2s;
+    }
+
+    .endpoints a:hover {
+      text-shadow: 0 0 8px rgba(85, 153, 255, 0.5);
+    }
+
+    .footer {
+      margin-top: 2rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #1a3a1a;
+      font-size: 0.6rem;
+      color: #444;
+    }
+
+    .footer a {
+      color: #555;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      color: #33ff33;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 0.5em;
+      height: 1em;
+      background: #33ff33;
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+    <div class="ascii-banner">
+______           _____           _____
+|  _  \         /  ___|         |  _  |
+| | | |_____   _\ `--.  ___  ___| | | |_ __  ___
+| | | / _ \ \ / /`--. \/ _ \/ __| | | | '_ \/ __|
+| |/ /  __/\ V //\__/ /  __/ (__\ \_/ / |_) \__ \
+|___/ \___| \_/ \____/ \___|\___|\___/| .__/|___/
+                                      | |
+                                      |_|</div>
+    <div class="prompt">noah@eks-cluster:~$ <span>kubectl get deployment -n project5</span><span class="cursor"></span></div>
+
+    <div class="section">
+      <div class="section-header">[ system status ]</div>
+      <div class="line"><span class="label">STATUS</span><span class="value-ok">■ OPERATIONAL</span></div>
+      <div class="line"><span class="label">PROJECT</span><span class="value">Project 5: DevSecOps Transformation</span></div>
+      <div class="line"><span class="label">CLUSTER</span><span class="value">project5-eks-cluster</span></div>
+      <div class="line"><span class="label">REGION</span><span class="value">eu-west-2 (London)</span></div>
+      <div class="line"><span class="label">RUNTIME</span><span class="value">Node.js 22-alpine</span></div>
+      <div class="line"><span class="label">REPLICAS</span><span class="value">2/2 ready</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">[ security pipeline ]</div>
+      <div class="pipeline-grid">
+        <div class="pipeline-stage"><div class="name">SAST</div><div class="status">[OK]</div></div>
+        <div class="pipeline-arrow">─►</div>
+        <div class="pipeline-stage"><div class="name">SCA</div><div class="status">[OK]</div></div>
+        <div class="pipeline-arrow">─►</div>
+        <div class="pipeline-stage"><div class="name">SECRETS</div><div class="status">[OK]</div></div>
+        <div class="pipeline-arrow">─►</div>
+        <div class="pipeline-stage"><div class="name">CONTAINER</div><div class="status">[OK]</div></div>
+        <div class="pipeline-arrow">─►</div>
+        <div class="pipeline-stage"><div class="name">IaC</div><div class="status">[OK]</div></div>
+        <div class="pipeline-arrow">─►</div>
+        <div class="pipeline-stage"><div class="name">DEPLOY</div><div class="status">[OK]</div></div>
+        <div class="pipeline-arrow">─►</div>
+        <div class="pipeline-stage"><div class="name">DAST</div><div class="status">[OK]</div></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-header">CONTAINER HARDENING</div>
+      <span class="check">✓</span> <span class="item">non-root user (UID 10001)</span><br>
+      <span class="check">✓</span> <span class="item">read-only root filesystem</span><br>
+      <span class="check">✓</span> <span class="item">all capabilities dropped</span><br>
+      <span class="check">✓</span> <span class="item">seccomp profile: RuntimeDefault</span><br>
+      <span class="check">✓</span> <span class="item">no service account token</span><br>
+      <span class="check">✓</span> <span class="item">package managers stripped from image</span>
+    </div>
+
+    <div class="box">
+      <div class="box-header">OBSERVABILITY</div>
+      <span class="check">✓</span> <span class="item">GuardDuty → Lambda → Splunk HEC</span><br>
+      <span class="check">✓</span> <span class="item">Kubernetes logs → Splunk OTel Collector</span><br>
+      <span class="check">✓</span> <span class="item">VPC Flow Logs → CloudWatch</span><br>
+      <span class="check">✓</span> <span class="item">EKS audit logs enabled</span>
+    </div>
+
+    <div class="section">
+      <div class="section-header">[ endpoints ]</div>
+      <div class="endpoints">
+        <a href="/health">/health</a>
+        <a href="/user">/user</a>
+        <a href="/csrf-token">/csrf-token</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="https://github.com/nfroze/End-to-End-DevSecOps-Pipeline-with-SIEM-Integration">github.com/nfroze</a> · Noah Frost · End-to-End DevSecOps Pipeline with SIEM Integration
+    </div>
+  </div>
+</body>
+</html>

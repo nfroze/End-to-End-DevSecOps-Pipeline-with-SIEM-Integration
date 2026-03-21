@@ -4,6 +4,7 @@ permissions:
   contents: read
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -20,25 +21,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v5
 
-      - name: 🔒 IaC Security Scan (Checkov)
+      - name: IaC Security Scan (Checkov)
         id: checkov
         uses: bridgecrewio/checkov-action@master
         with:
-          directory: .
+          directory: terraform
           framework: terraform
           output_format: cli
           soft_fail: true
 
-      - name: 📊 Security Summary
+      - name: Security Summary
         if: always()
         run: |
           echo "### Infrastructure Security Scan Complete"
           echo "Checkov validates our Terraform against:"
-          echo "- ✅ AWS Security Best Practices"
-          echo "- ✅ CIS Benchmarks"
-          echo "- ✅ Infrastructure Hardening"
+          echo "- AWS Security Best Practices"
+          echo "- CIS Benchmarks"
+          echo "- Infrastructure Hardening"
           echo ""
           echo "See SECURITY_EXCEPTIONS.md for accepted risks in this demo environment."
