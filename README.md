@@ -44,7 +44,7 @@ The pipeline flows left to right: a push to `main` triggers the CI workflow, whi
 
 **Security Scanning Pipeline (GitHub Actions)** — All four chained workflows passing with green checkmarks. The pipeline demonstrates successful execution of the CI workflow (security scanning), Container Build & Scan, and two downstream updates (Security Scanning Pipeline and Infrastructure Security), each completing in under 2 minutes. Each workflow run includes the commit hash and branch information, showing the fully gated pipeline in action.
 
-![](screenshots/github-actions-all-green.png)
+![](screenshots/github-actions.png)
 
 **EKS Cluster Monitoring Dashboard** — The AWS EKS cluster view showing cluster health metrics, including 5 support periods, 0 errors, and 0 unsupported upgrades. The Resources tab displays node group status with instance types, launch templates, and configurations. This view confirms the Kubernetes infrastructure is provisioned and healthy within the AWS console.
 
@@ -56,9 +56,9 @@ The pipeline flows left to right: a push to `main` triggers the CI workflow, whi
 
 **Running Application** — The Node.js Express application running in the EKS cluster, displaying green console output with security-relevant application startup logs. The output shows the application initializing with configuration details and security headers being enforced, confirming the hardened container is executing successfully in the production environment.
 
-![](screenshots/running-application.png)
+![](screenshots/application.png)
 
-**Splunk Security Monitoring Dashboard** — A Splunk Cloud SIEM dashboard displaying real-time threat intelligence and security telemetry. The dashboard shows 726,792 security findings, 7,727 critical alerts, 7,302 CloudTrail events, and 708,275 GuardDuty detections. Multiple panels visualize SecurityHub findings by severity (red bars showing critical events) and threat types, with a detailed log table showing the latest CloudTrail API calls and their security risk ratings, providing unified visibility across all AWS security data sources and Kubernetes audit logs.
+**Splunk Security Monitoring Dashboard** — Splunk Cloud SIEM dashboard aggregating five AWS security data sources into a single pane of glass. Top-level panels show 726,792 total events, 7,727 CloudTrail entries, 7,302 VPC Flow Logs, 708,275 EKS Audit logs, 382 GuardDuty findings, and 774 Security Hub findings. Lower panels break down GuardDuty findings by severity, GuardDuty threat types, and top CloudTrail API calls, with a latest threat findings table showing critical Security Hub alerts including S3 bucket compromise and ECS container detections.
 
 ![](screenshots/splunk-dashboard.png)
 
